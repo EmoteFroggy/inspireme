@@ -86,38 +86,40 @@
         }
 
         .history-grid {
-    		display: grid;
-    		grid-template-columns: repeat(8, minmax(120px, 1fr));
-    		gap: 1rem;
-    		margin-top: 3rem;
-    		padding-top: 2rem;
-    		border-top: 1px solid #2a2a2a;
-    		width: 100%;
-    		max-width: 1500px;
-    		max-height: 500px; /* Fixed height for scroll container */
-    		overflow-y: auto; /* Enable vertical scrolling */
-    		scrollbar-width: thin; /* For Firefox */
-    		scrollbar-color: #4b5563 #1f2937; /* For Firefox */
+    	    display: grid;
+    	    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    	    gap: 1rem;
+    	    margin-top: 3rem;
+    	    padding: 2rem 1rem 1rem;
+    	    border-top: 1px solid #2a2a2a;
+    	    width: 100%;
+    	    max-height: 250px;
+    	    overflow-y: auto;
+    	    overflow-x: hidden; /* Prevent horizontal scroll */
+    	    scrollbar-width: thin;
+    	    scrollbar-color: #4b5563 #1f2937;
+    	    box-sizing: content-box; /* Account for padding in width */
 	}
 
 	.history-grid::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
+    	    width: 8px;
+            height: 8px;
+	    margin-left: 4px;
+	}
 
-.history-grid::-webkit-scrollbar-track {
-    background: #1f2937;
-    border-radius: 4px;
-}
+	.history-grid::-webkit-scrollbar-track {
+    	    background: #1f2937;
+    	    border-radius: 4px;
+	}
 
-.history-grid::-webkit-scrollbar-thumb {
-    background: #4b5563;
-    border-radius: 4px;
-}
+	.history-grid::-webkit-scrollbar-thumb {
+            background: #4b5563;
+    	    border-radius: 4px;
+	}
 
-.history-grid::-webkit-scrollbar-thumb:hover {
-    background: #6366f1;
-}
+	.history-grid::-webkit-scrollbar-thumb:hover {
+    	    background: #6366f1;
+	}
 
         .history-image {
             width: 100%;
