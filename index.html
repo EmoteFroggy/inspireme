@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inspirobot Generator</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -68,6 +71,21 @@
             box-shadow: 0 6px 24px rgba(99, 102, 241, 0.3);
         }
 
+        .share-button {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            margin-left: 1rem;
+        }
+
+        .share-button:hover {
+            box-shadow: 0 6px 24px rgba(16, 185, 129, 0.3);
+        }
+
+        .button-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
         .history-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -99,33 +117,81 @@
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
+        .user-sidebar {
+            position: fixed;
+            left: 2rem;
+            top: 2rem;
+            width: 250px;
+            background: #121212;
+            padding: 1.5rem;
+            border-radius: 16px;
+            max-height: calc(100vh - 4rem);
+            overflow-y: auto;
+        }
+
+        .user-list {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .user-item {
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            background: #1a1a1a;
+            border-radius: 8px;
+            cursor: pointer;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-item:hover {
+            background: #2a2a2a;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 1rem;
+                flex-direction: column;
             }
             
             .container {
                 padding: 1.5rem;
+                margin-top: 5rem;
             }
             
             #mainImage {
                 height: 50vh;
                 margin: 1.5rem 0;
             }
+
+            .user-sidebar {
+                position: static;
+                width: 100%;
+                margin-bottom: 2rem;
+                max-height: 200px;
+            }
+
+            .button-container {
+                flex-direction: column;
+            }
+            
+            .share-button {
+                margin-left: 0;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- The HTML structure remains exactly the same -->
     <div class="container">
         <img id="mainImage" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjMyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4=" alt="Generated Image">
-        <br>
-        <button class="button" onclick="generateNew()">Generate New Image</button>
+        <div class="button-container">
+            <button class="button" onclick="generateNew()">Generate New Image</button>
+            <button class="button share-button" onclick="copyLink()">Share Image</button>
+        </div>
         <div id="historyGrid" class="history-grid"></div>
     </div>
 
     <script>
-        // JavaScript remains completely unchanged
         let history = [];
         let currentImageIndex = -1;
 
@@ -134,6 +200,7 @@
             if (history.length === 0) {
                 generateNew();
             }
+            initializeSocialFeatures();
         });
 
         function loadHistory() {
@@ -163,6 +230,12 @@
                 updateDisplay();
                 updateHistoryGrid();
                 saveHistory();
+                
+                if(currentUser) {
+                    await db.collection('users').doc(currentUser.uid).update({
+                        images: firebase.firestore.FieldValue.arrayUnion(imageUrl)
+                    });
+                }
             } catch (error) {
                 alert('Error generating image: ' + error.message);
             }
@@ -197,6 +270,114 @@
 
         function generateNew() {
             generateImage();
+        }
+
+        function copyLink() {
+            if (currentImageIndex >= 0 && history[currentImageIndex]) {
+                const url = history[currentImageIndex];
+                navigator.clipboard.writeText(url)
+                    .then(() => {
+                        const shareBtn = document.querySelector('.share-button');
+                        shareBtn.textContent = "Copied!";
+                        setTimeout(() => {
+                            shareBtn.textContent = "Share Image";
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy:', err);
+                        alert('Failed to copy link to clipboard');
+                    });
+            } else {
+                alert('No image to share! Generate one first.');
+            }
+        }
+
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        let currentUser = null;
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        async function initializeSocialFeatures() {
+            try {
+                const { user } = await auth.signInAnonymously();
+                currentUser = user;
+                
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (!userDoc.exists) {
+                    const username = prompt('Choose a username:');
+                    await db.collection('users').doc(user.uid).set({
+                        username,
+                        images: history,
+                        online: true,
+                        lastActive: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    await db.collection('users').doc(user.uid).update({
+                        online: true,
+                        lastActive: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+
+                setupPresence();
+                setupUserList();
+            } catch (error) {
+                console.error('Social features error:', error);
+            }
+        }
+
+        function setupPresence() {
+            const userRef = db.collection('users').doc(currentUser.uid);
+            
+            firebase.firestore().enableNetwork();
+            
+            userRef.onSnapshot((doc) => {
+                if (doc.exists && !doc.data().online) {
+                    userRef.update({ online: true });
+                }
+            });
+
+            window.addEventListener('beforeunload', () => {
+                userRef.update({ online: false });
+            });
+        }
+
+        function setupUserList() {
+            db.collection('users')
+                .where('online', '==', true)
+                .onSnapshot((snapshot) => {
+                    const userList = document.getElementById('userList');
+                    userList.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        if (doc.id !== currentUser.uid) {
+                            const li = document.createElement('li');
+                            li.className = 'user-item';
+                            li.textContent = doc.data().username;
+                            li.onclick = () => viewUserImages(doc.id);
+                            userList.appendChild(li);
+                        }
+                    });
+                });
+        }
+
+        async function viewUserImages(userId) {
+            const userDoc = await db.collection('users').doc(userId).get();
+            const grid = document.getElementById('historyGrid');
+            grid.innerHTML = userDoc.data().images
+                .map(url => `
+                    <img src="${url}" 
+                         class="history-image"
+                         alt="User image">
+                `)
+                .join('');
         }
     </script>
 </body>
