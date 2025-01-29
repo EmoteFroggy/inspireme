@@ -107,31 +107,36 @@
         }
 
         .delete-folder-btn {
-            background: none;
-            border: none;
-            padding: 4px;
-            cursor: pointer;
-            opacity: 0.5;
-            display: flex;
-            align-items: center;
-            margin-right: 0.25rem;
-        }
+    	    background: none;
+    	    border: none;
+    	    padding: 4px;
+    	    cursor: pointer;
+    	    opacity: 0.5;
+    	    display: flex;
+    	    align-items: center;
+    	    margin-right: 0.25rem;
+	}
 
-        .delete-folder-btn:hover {
-            opacity: 1;
-            transform: scale(1.1);
-        }
+	.delete-folder-btn:hover {
+    	    opacity: 1;
+    	    transform: scale(1.1);
+	}
 
         .delete-folder-btn svg {
-            width: 20px;
-            height: 20px;
-            fill: #888;
-            transition: all 0.2s ease;
-        }
+    	    width: 20px;
+    	    height: 20px;
+    	    fill: #aaa;
+    	    transition: all 0.2s ease;
+	}
+
+	.folder-item.selected .delete-folder-btn svg {
+    	    fill: #fff;
+	}
 
         .delete-folder-btn:hover svg {
-            fill: #ccc;
-        }
+    	    fill: #fff;
+    	    filter: brightness(1.2);
+	}
 
         .main-content {
             flex-grow: 1;
