@@ -6,7 +6,7 @@
     <title>inspireme</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        {
+        * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
@@ -86,40 +86,40 @@
         }
 
         .history-grid {
-    	    display: grid;
-    	    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    	    gap: 1rem;
-    	    margin-top: 3rem;
-    	    padding: 2rem 1rem 1rem;
-    	    border-top: 1px solid #2a2a2a;
-    	    width: 100%;
-    	    max-height: 250px;
-    	    overflow-y: auto;
-    	    overflow-x: hidden; /* Prevent horizontal scroll */
-    	    scrollbar-width: thin;
-    	    scrollbar-color: #4b5563 #1f2937;
-    	    box-sizing: content-box; /* Account for padding in width */
-	}
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 3rem;
+            padding: 2rem 1rem 1rem;
+            border-top: 1px solid #2a2a2a;
+            width: 100%;
+            max-height: 250px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: #4b5563 #1f2937;
+            box-sizing: content-box;
+        }
 
-	.history-grid::-webkit-scrollbar {
-    	    width: 8px;
+        .history-grid::-webkit-scrollbar {
+            width: 8px;
             height: 8px;
-	    margin-left: 4px;
-	}
+            margin-left: 4px;
+        }
 
-	.history-grid::-webkit-scrollbar-track {
-    	    background: #1f2937;
-    	    border-radius: 4px;
-	}
+        .history-grid::-webkit-scrollbar-track {
+            background: #1f2937;
+            border-radius: 4px;
+        }
 
-	.history-grid::-webkit-scrollbar-thumb {
+        .history-grid::-webkit-scrollbar-thumb {
             background: #4b5563;
-    	    border-radius: 4px;
-	}
+            border-radius: 4px;
+        }
 
-	.history-grid::-webkit-scrollbar-thumb:hover {
-    	    background: #6366f1;
-	}
+        .history-grid::-webkit-scrollbar-thumb:hover {
+            background: #6366f1;
+        }
 
         .history-image {
             width: 100%;
@@ -143,28 +143,63 @@
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
-        .delete-btn {
+        .kebab-menu {
             position: absolute;
             top: 20px;
-            right: 20px;
-            background: #ef4444;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
+            left: 20px;
+            z-index: 3;
+        }
+
+        .kebab-btn {
+            background: none;
             border: none;
-            cursor: pointer;
             color: white;
-            font-weight: bold;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            z-index: 2;
+            border-radius: 50%;
+            transition: all 0.2s ease;
         }
 
-        .delete-btn:hover {
-            background: #dc2626;
-            transform: scale(1.1);
+        .kebab-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .menu-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: #1f1f1f;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            min-width: 180px;
+            z-index: 4;
+            padding: 0.5rem 0;
+        }
+
+        .menu-content.show {
+            display: block;
+        }
+
+        .menu-item {
+            color: white;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .menu-item:hover {
+            background: #6366f1;
+            border-radius: 8px;
         }
 
         .modal-overlay {
@@ -206,7 +241,6 @@
             color: white;
         }
 
-        /* Added loading state */
         .loading::after {
             content: '';
             display: inline-block;
@@ -223,7 +257,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Added error message styling */
         .error-message {
             color: #ef4444;
             margin: 1rem 0;
@@ -247,13 +280,6 @@
                 margin: 1rem 0;
             }
 
-            .delete-btn {
-                top: 10px;
-                right: 10px;
-                width: 28px;
-                height: 28px;
-            }
-
             .button-container {
                 flex-direction: column;
                 align-items: center;
@@ -264,20 +290,19 @@
             #mainImage {
                 max-height: 50vh;
             }
-            
-            .delete-btn {
-                top: 8px;
-                right: 8px;
-                width: 24px;
-                height: 24px;
-                font-size: 0.8rem;
-            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <button class="delete-btn" aria-label="Delete current image" onclick="showDeleteConfirmation()">×</button>
+        <div class="kebab-menu">
+            <button class="kebab-btn" onclick="toggleMenu()">⋯</button>
+            <div class="menu-content">
+                <div class="menu-item" onclick="showDeleteConfirmation()">Delete Current Image</div>
+                <div class="menu-item" onclick="showDeleteAllConfirmation()">Delete All Images</div>
+            </div>
+        </div>
+
         <img id="mainImage" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjMyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4=" alt="Generated inspirational image">
         <div class="error-message" id="errorMessage"></div>
         <div class="button-container">
@@ -298,6 +323,17 @@
         </div>
     </div>
 
+    <div id="deleteAllModal" class="modal-overlay" style="display: none;">
+        <div class="confirmation-modal">
+            <h3>Delete all images?</h3>
+            <p>This will remove all images from your history. This action cannot be undone.</p>
+            <div class="modal-buttons">
+                <button class="button modal-cancel" onclick="hideDeleteAllConfirmation()">Cancel</button>
+                <button class="button modal-confirm" onclick="confirmDeleteAll()">Delete All</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let history = [];
         let currentImageIndex = -1;
@@ -306,6 +342,16 @@
             loadHistory();
             if (history.length === 0) {
                 generateNew();
+            }
+        });
+
+        function toggleMenu() {
+            document.querySelector('.menu-content').classList.toggle('show');
+        }
+
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.kebab-menu')) {
+                document.querySelector('.menu-content').classList.remove('show');
             }
         });
 
@@ -356,14 +402,10 @@
 
         function updateDisplay() {
             const mainImage = document.getElementById('mainImage');
-            const deleteBtn = document.querySelector('.delete-btn');
-            
             if (currentImageIndex >= 0 && history.length > 0) {
                 mainImage.src = history[currentImageIndex];
-                deleteBtn.style.display = 'flex';
             } else {
                 mainImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjMyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4=';
-                deleteBtn.style.display = 'none';
             }
 
             document.querySelectorAll('.history-image').forEach((img, index) => {
@@ -434,6 +476,25 @@
                 saveHistory();
             }
             hideDeleteConfirmation();
+        }
+
+        function showDeleteAllConfirmation() {
+            document.getElementById('deleteAllModal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideDeleteAllConfirmation() {
+            document.getElementById('deleteAllModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function confirmDeleteAll() {
+            history = [];
+            currentImageIndex = -1;
+            updateDisplay();
+            updateHistoryGrid();
+            saveHistory();
+            hideDeleteAllConfirmation();
         }
     </script>
 </body>
