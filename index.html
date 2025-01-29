@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inspirobot Generator</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -34,6 +31,9 @@
             border-radius: 16px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.3);
             width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         #mainImage {
@@ -73,17 +73,15 @@
 
         .share-button {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            margin-left: 1rem;
-        }
-
-        .share-button:hover {
-            box-shadow: 0 6px 24px rgba(16, 185, 129, 0.3);
         }
 
         .button-container {
             display: flex;
             gap: 1rem;
             margin-bottom: 2rem;
+            justify-content: center;
+            width: 100%;
+            max-width: 600px;
         }
 
         .history-grid {
@@ -93,6 +91,8 @@
             margin-top: 3rem;
             padding-top: 2rem;
             border-top: 1px solid #2a2a2a;
+            width: 100%;
+            max-width: 600px;
         }
 
         .history-image {
@@ -173,10 +173,7 @@
 
             .button-container {
                 flex-direction: column;
-            }
-            
-            .share-button {
-                margin-left: 0;
+                align-items: center;
             }
         }
     </style>
@@ -208,7 +205,7 @@
             if (savedHistory) {
                 history = JSON.parse(savedHistory);
                 if (history.length > 0) {
-                    currentImageIndex = history.length - 1;
+                    currentImageIndex = 0; // Start with most recent
                     updateDisplay();
                     updateHistoryGrid();
                 }
@@ -224,18 +221,14 @@
                 const response = await fetch('https://inspirobot.me/api?generate=true');
                 const imageUrl = await response.text();
                 
-                history.push(imageUrl);
-                currentImageIndex = history.length - 1;
+                // Add new image to beginning of array
+                history.unshift(imageUrl);
+                currentImageIndex = 0;
                 
                 updateDisplay();
                 updateHistoryGrid();
                 saveHistory();
-                
-                if(currentUser) {
-                    await db.collection('users').doc(currentUser.uid).update({
-                        images: firebase.firestore.FieldValue.arrayUnion(imageUrl)
-                    });
-                }
+            
             } catch (error) {
                 alert('Error generating image: ' + error.message);
             }
@@ -290,94 +283,6 @@
             } else {
                 alert('No image to share! Generate one first.');
             }
-        }
-
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
-
-        let currentUser = null;
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-
-        async function initializeSocialFeatures() {
-            try {
-                const { user } = await auth.signInAnonymously();
-                currentUser = user;
-                
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                if (!userDoc.exists) {
-                    const username = prompt('Choose a username:');
-                    await db.collection('users').doc(user.uid).set({
-                        username,
-                        images: history,
-                        online: true,
-                        lastActive: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                } else {
-                    await db.collection('users').doc(user.uid).update({
-                        online: true,
-                        lastActive: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                }
-
-                setupPresence();
-                setupUserList();
-            } catch (error) {
-                console.error('Social features error:', error);
-            }
-        }
-
-        function setupPresence() {
-            const userRef = db.collection('users').doc(currentUser.uid);
-            
-            firebase.firestore().enableNetwork();
-            
-            userRef.onSnapshot((doc) => {
-                if (doc.exists && !doc.data().online) {
-                    userRef.update({ online: true });
-                }
-            });
-
-            window.addEventListener('beforeunload', () => {
-                userRef.update({ online: false });
-            });
-        }
-
-        function setupUserList() {
-            db.collection('users')
-                .where('online', '==', true)
-                .onSnapshot((snapshot) => {
-                    const userList = document.getElementById('userList');
-                    userList.innerHTML = '';
-                    snapshot.forEach(doc => {
-                        if (doc.id !== currentUser.uid) {
-                            const li = document.createElement('li');
-                            li.className = 'user-item';
-                            li.textContent = doc.data().username;
-                            li.onclick = () => viewUserImages(doc.id);
-                            userList.appendChild(li);
-                        }
-                    });
-                });
-        }
-
-        async function viewUserImages(userId) {
-            const userDoc = await db.collection('users').doc(userId).get();
-            const grid = document.getElementById('historyGrid');
-            grid.innerHTML = userDoc.data().images
-                .map(url => `
-                    <img src="${url}" 
-                         class="history-image"
-                         alt="User image">
-                `)
-                .join('');
         }
     </script>
 </body>
