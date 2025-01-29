@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inspirobot Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: all 0.3s ease;
+        }
+
+        body {
+            background-color: #0a0a0a;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2.5rem;
+            background: #121212;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            width: 100%;
+        }
+
+        #mainImage {
+            width: 100%;
+            max-width: 600px;
+            height: 60vh;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 2px solid #2a2a2a;
+            margin: 2rem 0;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
+        }
+
+        #mainImage:hover {
+            transform: scale(1.01);
+        }
+
+        .button {
+            padding: 1rem 2.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(99, 102, 241, 0.3);
+        }
+
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #2a2a2a;
+        }
+
+        .history-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            cursor: pointer;
+            border-radius: 8px;
+            border: 2px solid #2a2a2a;
+            opacity: 0.8;
+        }
+
+        .history-image:hover {
+            opacity: 1;
+            transform: translateY(-2px);
+            border-color: #6366f1;
+        }
+
+        .history-image.active {
+            border-color: #10b981;
+            opacity: 1;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .container {
+                padding: 1.5rem;
+            }
+            
+            #mainImage {
+                height: 50vh;
+                margin: 1.5rem 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- The HTML structure remains exactly the same -->
+    <div class="container">
+        <img id="mainImage" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjMyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4=" alt="Generated Image">
+        <br>
+        <button class="button" onclick="generateNew()">Generate New Image</button>
+        <div id="historyGrid" class="history-grid"></div>
+    </div>
+
+    <script>
+        // JavaScript remains completely unchanged
+        let history = [];
+        let currentImageIndex = -1;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadHistory();
+            if (history.length === 0) {
+                generateNew();
+            }
+        });
+
+        function loadHistory() {
+            const savedHistory = localStorage.getItem('inspiroHistory');
+            if (savedHistory) {
+                history = JSON.parse(savedHistory);
+                if (history.length > 0) {
+                    currentImageIndex = history.length - 1;
+                    updateDisplay();
+                    updateHistoryGrid();
+                }
+            }
+        }
+
+        function saveHistory() {
+            localStorage.setItem('inspiroHistory', JSON.stringify(history));
+        }
+
+        async function generateImage() {
+            try {
+                const response = await fetch('https://inspirobot.me/api?generate=true');
+                const imageUrl = await response.text();
+                
+                history.push(imageUrl);
+                currentImageIndex = history.length - 1;
+                
+                updateDisplay();
+                updateHistoryGrid();
+                saveHistory();
+            } catch (error) {
+                alert('Error generating image: ' + error.message);
+            }
+        }
+
+        function updateDisplay() {
+            const mainImage = document.getElementById('mainImage');
+            if (mainImage && currentImageIndex >= 0 && currentImageIndex < history.length) {
+                mainImage.src = history[currentImageIndex];
+                document.querySelectorAll('.history-image').forEach((img, index) => {
+                    img.classList.toggle('active', index === currentImageIndex);
+                });
+            }
+        }
+
+        function updateHistoryGrid() {
+            const grid = document.getElementById('historyGrid');
+            grid.innerHTML = history
+                .map((url, index) => `
+                    <img src="${url}" 
+                         class="history-image ${index === currentImageIndex ? 'active' : ''}" 
+                         onclick="showFromHistory(${index})"
+                         alt="History image ${index + 1}">
+                `)
+                .join('');
+        }
+
+        function showFromHistory(index) {
+            currentImageIndex = index;
+            updateDisplay();
+        }
+
+        function generateNew() {
+            generateImage();
+        }
+    </script>
+</body>
+</html>
