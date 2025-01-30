@@ -492,6 +492,7 @@
                 const imageUrl = await response.text();
                 history.unshift(imageUrl);
                 currentImageIndex = 0;
+                selectedFolderId = 'all'; // Reset to All Images when generating
                 updateUI();
                 saveData();
             } catch (error) {
