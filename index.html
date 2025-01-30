@@ -352,6 +352,52 @@
                 max-height: 200px;
             }
         }
+
+	.kebab-menu {
+    position: absolute;
+    top: 70px;
+    left: 300px;
+    cursor: pointer;
+    padding: 8px;
+    z-index: 10;
+}
+
+.kebab-dot {
+    width: 4px;
+    height: 4px;
+    background: rgba(255,255,255,0.8);
+    border-radius: 50%;
+    margin: 2px 0;
+    transition: all 0.2s ease;
+}
+
+.kebab-menu:hover .kebab-dot {
+    background: #fff;
+}
+
+.menu-options {
+    position: absolute;
+    top: 40px;
+    left: 20px;
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    display: none;
+    z-index: 100;
+    min-width: 180px;
+}
+
+.menu-option {
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #ef4444;
+}
+
+.menu-option:hover {
+    background: #ef444422;
+}
     </style>
 </head>
 <body>
@@ -406,6 +452,44 @@
             </div>
         </div>
     </div>
+	
+	<div class="main-content">
+    <!-- Kebab Menu -->
+    <div class="kebab-menu" onclick="toggleMenu()">
+        <div class="kebab-dot"></div>
+        <div class="kebab-dot"></div>
+        <div class="kebab-dot"></div>
+    </div>
+    <div class="menu-options" id="menuOptions">
+        <div class="menu-option delete" onclick="showDeleteImageModal()">Delete Current Image</div>
+        <div class="menu-option delete" onclick="showDeleteAllImagesModal()">Delete All Images</div>
+    </div>
+
+    <img id="mainImage" ...>
+</div>
+
+<!-- Add these new modals -->
+<div id="deleteImageModal" class="modal-overlay" style="display: none;">
+    <div class="confirmation-modal">
+        <h3>Delete Current Image?</h3>
+        <p class="confirmation-text">This cannot be undone.</p>
+        <div class="modal-buttons">
+            <button class="button modal-cancel" onclick="hideDeleteImageModal()">Cancel</button>
+            <button class="button modal-delete" onclick="confirmDeleteImage()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<div id="deleteAllImagesModal" class="modal-overlay" style="display: none;">
+    <div class="confirmation-modal">
+        <h3>Delete All Images?</h3>
+        <p class="confirmation-text">This cannot be undone.</p>
+        <div class="modal-buttons">
+            <button class="button modal-cancel" onclick="hideDeleteAllImagesModal()">Cancel</button>
+            <button class="button modal-delete" onclick="confirmDeleteAllImages()">Delete All</button>
+        </div>
+    </div>
+</div>
 
     <script>
         let history = [];
@@ -415,6 +499,7 @@
         let folderToDelete = null;
         let renamingFolderId = null;
         let selectedFolderId = 'all';
+	let menuOpen = false;
 
         document.addEventListener('DOMContentLoaded', () => {
             loadData();
@@ -726,6 +811,72 @@
         }, 2000);
     }
 }
+
+	function toggleMenu() {
+    const menu = document.getElementById('menuOptions');
+    menuOpen = !menuOpen;
+    menu.style.display = menuOpen ? 'block' : 'none';
+}
+
+function closeMenu() {
+    menuOpen = false;
+    document.getElementById('menuOptions').style.display = 'none';
+}
+
+function showDeleteImageModal() {
+    closeMenu();
+    document.getElementById('deleteImageModal').style.display = 'flex';
+}
+
+function hideDeleteImageModal() {
+    document.getElementById('deleteImageModal').style.display = 'none';
+}
+
+function showDeleteAllImagesModal() {
+    closeMenu();
+    document.getElementById('deleteAllImagesModal').style.display = 'flex';
+}
+
+function hideDeleteAllImagesModal() {
+    document.getElementById('deleteAllImagesModal').style.display = 'none';
+}
+
+function confirmDeleteImage() {
+    let displayImages = selectedFolderId === 'all' 
+        ? history 
+        : folders.find(f => f.id === selectedFolderId)?.images || [];
+    
+    if (currentImageIndex >= 0 && displayImages[currentImageIndex]) {
+        const deletedImage = displayImages.splice(currentImageIndex, 1)[0];
+        
+        // Remove from all folders
+        folders.forEach(folder => {
+            const index = folder.images.indexOf(deletedImage);
+            if (index > -1) folder.images.splice(index, 1);
+        });
+        
+        currentImageIndex = -1;
+        updateUI();
+        saveData();
+    }
+    hideDeleteImageModal();
+}
+
+function confirmDeleteAllImages() {
+    history = [];
+    folders.forEach(folder => folder.images = []);
+    currentImageIndex = -1;
+    updateUI();
+    saveData();
+    hideDeleteAllImagesModal();
+}
+
+// Add click listener to close menu
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.kebab-menu') && !e.target.closest('.menu-options')) {
+        closeMenu();
+    }
+});
     </script>
 </body>
 </html>
