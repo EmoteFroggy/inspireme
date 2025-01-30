@@ -682,15 +682,32 @@
         }
 
         function copyLink() {
-            if (currentImageIndex >= 0 && history[currentImageIndex]) {
-                navigator.clipboard.writeText(history[currentImageIndex]);
-                const shareBtn = document.querySelector('.share-button');
-                shareBtn.textContent = "Copied!";
-                setTimeout(() => {
-                    shareBtn.textContent = "Share Image";
-                }, 2000);
-            }
-        }
+    // Get the correct image list based on selected folder
+    let displayImages = [];
+    if (selectedFolderId === 'all') {
+        displayImages = history;
+    } else {
+        const selectedFolder = folders.find(f => f.id === selectedFolderId);
+        displayImages = selectedFolder ? selectedFolder.images : [];
+    }
+
+    if (currentImageIndex >= 0 && displayImages[currentImageIndex]) {
+        navigator.clipboard.writeText(displayImages[currentImageIndex]);
+        const shareBtn = document.querySelector('.share-button');
+        shareBtn.textContent = "Copied!";
+        setTimeout(() => {
+            shareBtn.textContent = "Share Image";
+        }, 2000);
+    } else if (history.length > 0) {
+        // Fallback to latest image if nothing selected
+        navigator.clipboard.writeText(history[0]);
+        const shareBtn = document.querySelector('.share-button');
+        shareBtn.textContent = "Copied!";
+        setTimeout(() => {
+            shareBtn.textContent = "Share Image";
+        }, 2000);
+    }
+}
     </script>
 </body>
 </html>
