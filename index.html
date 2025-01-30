@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>inspireme</title>
+    <title>InspireMe</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
         * {
@@ -206,6 +206,10 @@
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         }
 
+        .select-multiple-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
         .history-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -227,6 +231,7 @@
             border: 2px solid #2a2a2a;
             opacity: 0.8;
             transition: all 0.2s ease;
+            position: relative;
         }
 
         .history-image.dragging {
@@ -317,7 +322,7 @@
             scrollbar-color: #3a3a3a #1a1a1a;
         }
 
-	.modal-delete {
+        .modal-delete {
             background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
         }
         
@@ -351,53 +356,108 @@
                 margin: 0 0 2rem 0;
                 max-height: 200px;
             }
+
+            .button-container {
+                flex-wrap: wrap;
+            }
         }
 
-	.kebab-menu {
-    position: absolute;
-    top: 70px;
-    left: 300px;
-    cursor: pointer;
-    padding: 8px;
-    z-index: 10;
-}
+        .kebab-menu {
+            position: absolute;
+            top: 70px;
+            left: 300px;
+            cursor: pointer;
+            padding: 8px;
+            z-index: 10;
+        }
 
-.kebab-dot {
-    width: 4px;
-    height: 4px;
-    background: rgba(255,255,255,0.8);
-    border-radius: 50%;
-    margin: 2px 0;
-    transition: all 0.2s ease;
-}
+        .kebab-dot {
+            width: 4px;
+            height: 4px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            margin: 2px 0;
+            transition: all 0.2s ease;
+        }
 
-.kebab-menu:hover .kebab-dot {
-    background: #fff;
-}
+        .kebab-menu:hover .kebab-dot {
+            background: #fff;
+        }
 
-.menu-options {
-    position: absolute;
-    top: 40px;
-    left: 20px;
-    background: #1a1a1a;
-    border-radius: 8px;
-    padding: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    display: none;
-    z-index: 100;
-    min-width: 180px;
-}
+        .menu-options {
+            position: absolute;
+            top: 40px;
+            left: 20px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 100;
+            min-width: 180px;
+        }
 
-.menu-option {
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    color: #ef4444;
-}
+        .menu-option {
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #ef4444;
+        }
 
-.menu-option:hover {
-    background: #ef444422;
-}
+        .menu-option:hover {
+            background: #ef444422;
+        }
+
+        .selection-checkbox {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 20px;
+            height: 20px;
+            accent-color: #6366f1;
+            cursor: pointer;
+            z-index: 2;
+            display: none;
+        }
+
+        .selection-mode .selection-checkbox {
+            display: block;
+        }
+
+        .history-image.selected {
+            outline: 2px solid #6366f1;
+            outline-offset: -2px;
+        }
+
+        .batch-toolbar {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a1a;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            display: none;
+            gap: 1rem;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+
+        .selection-count {
+            margin-right: 1rem;
+            color: #8b5cf6;
+            font-weight: 600;
+        }
+
+        .move-folder {
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .move-folder:hover {
+            transform: translateX(5px);
+            background: #2a2a2a;
+        }
     </style>
 </head>
 <body>
@@ -411,12 +471,31 @@
         </div>
 
         <div class="main-content">
+            <div class="kebab-menu" onclick="toggleMenu()">
+                <div class="kebab-dot"></div>
+                <div class="kebab-dot"></div>
+                <div class="kebab-dot"></div>
+            </div>
+            <div class="menu-options" id="menuOptions">
+                <div class="menu-option delete" onclick="showDeleteImageModal()">Delete Current Image</div>
+                <div class="menu-option delete" onclick="showDeleteAllImagesModal()">Delete All Images</div>
+            </div>
+
             <img id="mainImage" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjMyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4=" alt="Generated inspirational image">
             <div class="button-container">
                 <button class="button" id="generateBtn" onclick="generateNew()">Generate New Image</button>
                 <button class="button share-button" onclick="copyLink()">Share Image</button>
+                <button class="button select-multiple-btn" onclick="toggleSelectionMode()">Select Multiple</button>
             </div>
             <div id="historyGrid" class="history-grid"></div>
+        </div>
+
+        <!-- Batch Operations Toolbar -->
+        <div class="batch-toolbar" id="batchToolbar">
+            <span class="selection-count" id="selectionCount">0 Selected</span>
+            <button class="button" onclick="deleteSelected()">Delete</button>
+            <button class="button" onclick="showMoveModal()">Move To...</button>
+            <button class="button" onclick="clearSelection()">Cancel</button>
         </div>
 
         <!-- Modals -->
@@ -432,75 +511,73 @@
         </div>
 
         <div id="deleteModal" class="modal-overlay" style="display: none;">
-        <div class="confirmation-modal">
-            <h3>Delete Folder</h3>
-            <p class="confirmation-text">Are you sure you want to delete this folder? All images will return to "All Images".</p>
-            <div class="modal-buttons">
-                <button class="button modal-cancel" onclick="hideDeleteModal()">Cancel</button>
-                <button class="button modal-delete" onclick="confirmFolderDeletion()">Delete</button>
+            <div class="confirmation-modal">
+                <h3>Delete Folder</h3>
+                <p class="confirmation-text">Are you sure you want to delete this folder? All images will return to "All Images".</p>
+                <div class="modal-buttons">
+                    <button class="button modal-cancel" onclick="hideDeleteModal()">Cancel</button>
+                    <button class="button modal-delete" onclick="confirmFolderDeletion()">Delete</button>
+                </div>
             </div>
         </div>
-    </div>
 
         <div id="renameModal" class="modal-overlay" style="display: none;">
-        <div class="confirmation-modal">
-            <h3>Rename Folder</h3>
-            <input type="text" class="folder-input" id="renameFolderName" placeholder="Enter new folder name">
-            <div class="modal-buttons">
-                <button class="button modal-cancel" onclick="hideRenameModal()">Cancel</button>
-                <button class="button modal-rename" onclick="confirmRename()">Rename</button>
+            <div class="confirmation-modal">
+                <h3>Rename Folder</h3>
+                <input type="text" class="folder-input" id="renameFolderName" placeholder="Enter new folder name">
+                <div class="modal-buttons">
+                    <button class="button modal-cancel" onclick="hideRenameModal()">Cancel</button>
+                    <button class="button modal-rename" onclick="confirmRename()">Rename</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="moveModal" class="modal-overlay" style="display: none;">
+            <div class="confirmation-modal">
+                <h3>Move Selected Images</h3>
+                <div class="folders-list-modal" id="foldersListModal"></div>
+                <div class="modal-buttons">
+                    <button class="button modal-cancel" onclick="hideMoveModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="deleteImageModal" class="modal-overlay" style="display: none;">
+            <div class="confirmation-modal">
+                <h3>Delete Current Image?</h3>
+                <p class="confirmation-text">This cannot be undone.</p>
+                <div class="modal-buttons">
+                    <button class="button modal-cancel" onclick="hideDeleteImageModal()">Cancel</button>
+                    <button class="button modal-delete" onclick="confirmDeleteImage()">Delete</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="deleteAllImagesModal" class="modal-overlay" style="display: none;">
+            <div class="confirmation-modal">
+                <h3>Delete All Images?</h3>
+                <p class="confirmation-text">This cannot be undone.</p>
+                <div class="modal-buttons">
+                    <button class="button modal-cancel" onclick="hideDeleteAllImagesModal()">Cancel</button>
+                    <button class="button modal-delete" onclick="confirmDeleteAllImages()">Delete All</button>
+                </div>
             </div>
         </div>
     </div>
-	
-	<div class="main-content">
-    <!-- Kebab Menu -->
-    <div class="kebab-menu" onclick="toggleMenu()">
-        <div class="kebab-dot"></div>
-        <div class="kebab-dot"></div>
-        <div class="kebab-dot"></div>
-    </div>
-    <div class="menu-options" id="menuOptions">
-        <div class="menu-option delete" onclick="showDeleteImageModal()">Delete Current Image</div>
-        <div class="menu-option delete" onclick="showDeleteAllImagesModal()">Delete All Images</div>
-    </div>
-
-    <img id="mainImage" ...>
-</div>
-
-<!-- Add these new modals -->
-<div id="deleteImageModal" class="modal-overlay" style="display: none;">
-    <div class="confirmation-modal">
-        <h3>Delete Current Image?</h3>
-        <p class="confirmation-text">This cannot be undone.</p>
-        <div class="modal-buttons">
-            <button class="button modal-cancel" onclick="hideDeleteImageModal()">Cancel</button>
-            <button class="button modal-delete" onclick="confirmDeleteImage()">Delete</button>
-        </div>
-    </div>
-</div>
-
-<div id="deleteAllImagesModal" class="modal-overlay" style="display: none;">
-    <div class="confirmation-modal">
-        <h3>Delete All Images?</h3>
-        <p class="confirmation-text">This cannot be undone.</p>
-        <div class="modal-buttons">
-            <button class="button modal-cancel" onclick="hideDeleteAllImagesModal()">Cancel</button>
-            <button class="button modal-delete" onclick="confirmDeleteAllImages()">Delete All</button>
-        </div>
-    </div>
-</div>
 
     <script>
         let history = [];
         let currentImageIndex = -1;
         let folders = [];
+        let selectedImages = new Set();
+        let isSelectionMode = false;
         let draggedImage = null;
         let folderToDelete = null;
         let renamingFolderId = null;
         let selectedFolderId = 'all';
-	let menuOpen = false;
+        let menuOpen = false;
 
+        // Initialization
         document.addEventListener('DOMContentLoaded', () => {
             loadData();
             if (history.length === 0) generateNew();
@@ -510,21 +587,8 @@
             const savedData = localStorage.getItem('inspiroData');
             if (savedData) {
                 const data = JSON.parse(savedData);
-                
-                if (data.version !== 2) {
-                    history = [...data.history, ...data.folders.flatMap(f => f.images)];
-                    folders = data.folders.map(f => ({ ...f, images: [] }));
-                    localStorage.setItem('inspiroData', JSON.stringify({
-                        version: 2,
-                        history,
-                        folders,
-                        currentIndex: -1
-                    }));
-                } else {
-                    history = data.history || [];
-                    folders = data.folders || [];
-                }
-                
+                history = data.history || [];
+                folders = data.folders || [];
                 currentImageIndex = data.currentIndex || -1;
             }
 
@@ -549,43 +613,7 @@
             localStorage.setItem('inspiroData', JSON.stringify(data));
         }
 
-        function handleDrop(e, folderId) {
-            e.preventDefault();
-            const folder = folders.find(f => f.id === folderId);
-            
-            if (!folder || !draggedImage) return;
-
-            if (folderId === 'all') {
-                folders.forEach(f => {
-                    const index = f.images.indexOf(draggedImage);
-                    if (index > -1) {
-                        f.images.splice(index, 1);
-                        if (!history.includes(draggedImage)) {
-                            history.push(draggedImage);
-                        }
-                    }
-                });
-            } else {
-                const historyIndex = history.indexOf(draggedImage);
-                if (historyIndex > -1) history.splice(historyIndex, 1);
-                
-                folders.forEach(f => {
-                    const folderIndex = f.images.indexOf(draggedImage);
-                    if (folderIndex > -1) f.images.splice(folderIndex, 1);
-                });
-
-                if (!folder.images.includes(draggedImage)) {
-                    folder.images.push(draggedImage);
-                }
-            }
-            
-            saveData();
-            updateUI();
-            document.querySelectorAll('.folder-item').forEach(item => {
-                item.classList.remove('drop-target');
-            });
-        }
-
+        // Image Generation
         async function generateNew() {
             const generateBtn = document.getElementById('generateBtn');
             try {
@@ -594,7 +622,7 @@
                 const imageUrl = await response.text();
                 history.unshift(imageUrl);
                 currentImageIndex = 0;
-                selectedFolderId = 'all'; // Reset to All Images when generating
+                selectedFolderId = 'all';
                 updateUI();
                 saveData();
             } catch (error) {
@@ -604,21 +632,7 @@
             }
         }
 
-        function confirmFolderDeletion() {
-            if (folderToDelete) {
-                const index = folders.findIndex(f => f.id === folderToDelete);
-                if (index > -1) {
-                    const deletedFolder = folders[index];
-                    history.push(...deletedFolder.images);
-                    if (selectedFolderId === folderToDelete) selectedFolderId = 'all';
-                    folders.splice(index, 1);
-                    updateUI();
-                    saveData();
-                }
-            }
-            hideDeleteModal();
-        }
-
+        // Folder Management
         function showFolderModal() {
             document.getElementById('folderModal').style.display = 'flex';
             document.getElementById('folderName').focus();
@@ -643,21 +657,6 @@
             }
         }
 
-        function selectFolder(folderId) {
-            selectedFolderId = folderId === selectedFolderId ? 'all' : folderId;
-            currentImageIndex = -1;
-            updateUI();
-        }
-
-        function showFromHistory(url) {
-            let displayImages = selectedFolderId === 'all' 
-                ? history 
-                : folders.find(f => f.id === selectedFolderId)?.images || [];
-            
-            currentImageIndex = displayImages.indexOf(url);
-            updateUI();
-        }
-
         function showDeleteModal(folderId) {
             folderToDelete = folderId;
             document.getElementById('deleteModal').style.display = 'flex';
@@ -666,6 +665,21 @@
         function hideDeleteModal() {
             document.getElementById('deleteModal').style.display = 'none';
             folderToDelete = null;
+        }
+
+        function confirmFolderDeletion() {
+            if (folderToDelete) {
+                const index = folders.findIndex(f => f.id === folderToDelete);
+                if (index > -1) {
+                    const deletedFolder = folders[index];
+                    history.push(...deletedFolder.images);
+                    if (selectedFolderId === folderToDelete) selectedFolderId = 'all';
+                    folders.splice(index, 1);
+                    updateUI();
+                    saveData();
+                }
+            }
+            hideDeleteModal();
         }
 
         function showRenameModal(folderId, currentName) {
@@ -693,18 +707,237 @@
             hideRenameModal();
         }
 
-        function updateUI() {
-            // Get current display images
-            let displayImages = [];
-            if (selectedFolderId === 'all') {
-                displayImages = [...history];
-            } else {
-                const selectedFolder = folders.find(f => f.id === selectedFolderId);
-                displayImages = selectedFolder ? [...selectedFolder.images] : [];
-            }
+        // Image Management
+        function selectFolder(folderId) {
+            selectedFolderId = folderId === selectedFolderId ? 'all' : folderId;
+            currentImageIndex = -1;
+            updateUI();
+        }
 
-            // Update main image display
+        function showFromHistory(url) {
+            let displayImages = selectedFolderId === 'all' 
+                ? history 
+                : folders.find(f => f.id === selectedFolderId)?.images || [];
+            
+            currentImageIndex = displayImages.indexOf(url);
+            updateUI();
+        }
+
+        function copyLink() {
+            let displayImages = selectedFolderId === 'all' 
+                ? history 
+                : folders.find(f => f.id === selectedFolderId)?.images || [];
+            
+            if (currentImageIndex >= 0 && displayImages[currentImageIndex]) {
+                navigator.clipboard.writeText(displayImages[currentImageIndex]);
+                const shareBtn = document.querySelector('.share-button');
+                shareBtn.textContent = "Copied!";
+                setTimeout(() => shareBtn.textContent = "Share Image", 2000);
+            }
+        }
+
+        // Drag & Drop
+        function handleDragStart(e, url) {
+            if (isSelectionMode) return;
+            draggedImage = url;
+            e.target.classList.add('dragging');
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            const folderItem = e.target.closest('.folder-item');
+            if (folderItem) folderItem.classList.add('drop-target');
+        }
+
+        function handleDragLeave(e) {
+            const folderItem = e.target.closest('.folder-item');
+            if (folderItem) folderItem.classList.remove('drop-target');
+        }
+
+        function handleDrop(e, folderId) {
+            e.preventDefault();
+            const folder = folders.find(f => f.id === folderId);
+            if (!folder || !draggedImage) return;
+
+            if (folderId === 'all') {
+                folders.forEach(f => {
+                    const index = f.images.indexOf(draggedImage);
+                    if (index > -1) {
+                        f.images.splice(index, 1);
+                        if (!history.includes(draggedImage)) history.push(draggedImage);
+                    }
+                });
+            } else {
+                const historyIndex = history.indexOf(draggedImage);
+                if (historyIndex > -1) history.splice(historyIndex, 1);
+                
+                folders.forEach(f => {
+                    const folderIndex = f.images.indexOf(draggedImage);
+                    if (folderIndex > -1) f.images.splice(folderIndex, 1);
+                });
+
+                if (!folder.images.includes(draggedImage)) {
+                    folder.images.push(draggedImage);
+                }
+            }
+            
+            saveData();
+            updateUI();
+            document.querySelectorAll('.folder-item').forEach(item => {
+                item.classList.remove('drop-target');
+            });
+        }
+
+        // Batch Operations
+        function toggleSelectionMode() {
+            isSelectionMode = !isSelectionMode;
+            selectedImages.clear();
+            document.body.classList.toggle('selection-mode', isSelectionMode);
+            document.getElementById('batchToolbar').style.display = isSelectionMode ? 'flex' : 'none';
+            updateUI();
+        }
+
+        function toggleImageSelection(url) {
+            if (!isSelectionMode) return;
+            selectedImages.has(url) ? selectedImages.delete(url) : selectedImages.add(url);
+            updateUI();
+        }
+
+        function deleteSelected() {
+            history = history.filter(url => !selectedImages.has(url));
+            folders.forEach(folder => {
+                folder.images = folder.images.filter(url => !selectedImages.has(url));
+            });
+            clearSelection();
+            saveData();
+            updateUI();
+        }
+
+        function showMoveModal() {
+            if (selectedImages.size === 0) return;
+            const foldersListModal = document.getElementById('foldersListModal');
+            foldersListModal.innerHTML = folders.map(folder => `
+                <div class="folder-item move-folder" onclick="moveToFolder('${folder.id}')">
+                    <div class="folder-content">
+                        <span>${folder.name}</span>
+                        <span class="folder-count">
+                            ${folder.id === 'all' ? history.length : folder.images.length}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('moveModal').style.display = 'flex';
+        }
+
+        function hideMoveModal() {
+            document.getElementById('moveModal').style.display = 'none';
+        }
+
+        function moveToFolder(folderId) {
+            const targetFolder = folders.find(f => f.id === folderId);
+            if (!targetFolder) return;
+
+            selectedImages.forEach(url => {
+                // Remove from other folders and history as needed
+                folders.forEach(folder => {
+                    if (folder.id !== folderId) {
+                        if (folder.id === 'all') {
+                            // Remove from history if moving to a specific folder
+                            if (folderId !== 'all') {
+                                const index = history.indexOf(url);
+                                if (index > -1) history.splice(index, 1);
+                            }
+                        } else {
+                            // Remove from other folders' images
+                            const index = folder.images.indexOf(url);
+                            if (index > -1) folder.images.splice(index, 1);
+                        }
+                    }
+                });
+
+                // Add to target location
+                if (folderId === 'all') {
+                    // Add to history if not already present
+                    if (!history.includes(url)) {
+                        history.push(url);
+                    }
+                } else {
+                    // Add to folder if not already present
+                    if (!targetFolder.images.includes(url)) {
+                        targetFolder.images.push(url);
+                    }
+                }
+            });
+
+            hideMoveModal();
+            clearSelection();
+            saveData();
+            updateUI();
+        }
+
+        function clearSelection() {
+            selectedImages.clear();
+            toggleSelectionMode();
+        }
+
+        // Image Deletion
+        function showDeleteImageModal() {
+            closeMenu();
+            document.getElementById('deleteImageModal').style.display = 'flex';
+        }
+
+        function hideDeleteImageModal() {
+            document.getElementById('deleteImageModal').style.display = 'none';
+        }
+
+        function confirmDeleteImage() {
+            let displayImages = selectedFolderId === 'all' 
+                ? history 
+                : folders.find(f => f.id === selectedFolderId)?.images || [];
+            
+            if (currentImageIndex >= 0 && displayImages[currentImageIndex]) {
+                const deletedImage = displayImages.splice(currentImageIndex, 1)[0];
+                folders.forEach(folder => {
+                    const index = folder.images.indexOf(deletedImage);
+                    if (index > -1) folder.images.splice(index, 1);
+                });
+                currentImageIndex = -1;
+                updateUI();
+                saveData();
+            }
+            hideDeleteImageModal();
+        }
+
+        function showDeleteAllImagesModal() {
+            closeMenu();
+            document.getElementById('deleteAllImagesModal').style.display = 'flex';
+        }
+
+        function hideDeleteAllImagesModal() {
+            document.getElementById('deleteAllImagesModal').style.display = 'none';
+        }
+
+        function confirmDeleteAllImages() {
+            history = [];
+            folders.forEach(folder => folder.images = []);
+            currentImageIndex = -1;
+            updateUI();
+            saveData();
+            hideDeleteAllImagesModal();
+        }
+
+        // UI Updates
+        function updateUI() {
+            // Update main image
             const mainImage = document.getElementById('mainImage');
+            let displayImages = selectedFolderId === 'all' 
+                ? history 
+                : folders.find(f => f.id === selectedFolderId)?.images || [];
+            
             if (currentImageIndex >= 0 && currentImageIndex < displayImages.length) {
                 mainImage.src = `${displayImages[currentImageIndex]}?t=${Date.now()}`;
             } else if (displayImages.length > 0) {
@@ -714,18 +947,26 @@
                 mainImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjMyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4=';
             }
 
+            // Update history grid
             const historyGrid = document.getElementById('historyGrid');
             historyGrid.innerHTML = displayImages.map((url, index) => `
-                <img src="${url}" 
-                     class="history-image ${index === currentImageIndex ? 'active' : ''}"
-                     onclick="showFromHistory('${url.replace(/'/g, "\\'")}')"
-                     draggable="true"
-                     ondragstart="handleDragStart(event, '${url.replace(/'/g, "\\'")}')"
-                     ondragend="handleDragEnd(event)"
-                     alt="History image">
+                <div style="position: relative">
+                    <input type="checkbox" class="selection-checkbox" 
+                        ${selectedImages.has(url) ? 'checked' : ''}
+                        onchange="toggleImageSelection('${url}')"
+                        style="${isSelectionMode ? 'display: block' : 'display: none'}">
+                    <img src="${url}" 
+                        class="history-image ${selectedImages.has(url) ? 'selected' : ''} 
+                            ${index === currentImageIndex ? 'active' : ''}"
+                        onclick="${isSelectionMode ? `toggleImageSelection('${url}')` : `showFromHistory('${url}')`}"
+                        draggable="${!isSelectionMode}"
+                        ondragstart="handleDragStart(event, '${url}')"
+                        ondragend="handleDragEnd(event)"
+                        alt="History image">
+                </div>
             `).join('');
 
-
+            // Update folders list
             const foldersList = document.getElementById('foldersList');
             foldersList.innerHTML = folders.map(folder => {
                 const count = folder.id === 'all' 
@@ -762,121 +1003,42 @@
                     </li>
                 `;
             }).join('');
+
+            // Update selection count
+            document.getElementById('selectionCount').textContent = 
+                `${selectedImages.size} Selected`;
         }
 
-        function handleDragStart(e, url) {
-            draggedImage = url;
-            e.target.classList.add('dragging');
+        // Menu Controls
+        function toggleMenu() {
+            const menu = document.getElementById('menuOptions');
+            menuOpen = !menuOpen;
+            menu.style.display = menuOpen ? 'block' : 'none';
         }
 
-        function handleDragEnd(e) {
-            e.target.classList.remove('dragging');
+        function closeMenu() {
+            menuOpen = false;
+            document.getElementById('menuOptions').style.display = 'none';
         }
 
-        function handleDragOver(e) {
-            e.preventDefault();
-            const folderItem = e.target.closest('.folder-item');
-            if (folderItem) folderItem.classList.add('drop-target');
-        }
-
-        function handleDragLeave(e) {
-            const folderItem = e.target.closest('.folder-item');
-            if (folderItem) folderItem.classList.remove('drop-target');
-        }
-
-        function copyLink() {
-    // Get the correct image list based on selected folder
-    let displayImages = [];
-    if (selectedFolderId === 'all') {
-        displayImages = history;
-    } else {
-        const selectedFolder = folders.find(f => f.id === selectedFolderId);
-        displayImages = selectedFolder ? selectedFolder.images : [];
-    }
-
-    if (currentImageIndex >= 0 && displayImages[currentImageIndex]) {
-        navigator.clipboard.writeText(displayImages[currentImageIndex]);
-        const shareBtn = document.querySelector('.share-button');
-        shareBtn.textContent = "Copied!";
-        setTimeout(() => {
-            shareBtn.textContent = "Share Image";
-        }, 2000);
-    } else if (history.length > 0) {
-        // Fallback to latest image if nothing selected
-        navigator.clipboard.writeText(history[0]);
-        const shareBtn = document.querySelector('.share-button');
-        shareBtn.textContent = "Copied!";
-        setTimeout(() => {
-            shareBtn.textContent = "Share Image";
-        }, 2000);
-    }
-}
-
-	function toggleMenu() {
-    const menu = document.getElementById('menuOptions');
-    menuOpen = !menuOpen;
-    menu.style.display = menuOpen ? 'block' : 'none';
-}
-
-function closeMenu() {
-    menuOpen = false;
-    document.getElementById('menuOptions').style.display = 'none';
-}
-
-function showDeleteImageModal() {
-    closeMenu();
-    document.getElementById('deleteImageModal').style.display = 'flex';
-}
-
-function hideDeleteImageModal() {
-    document.getElementById('deleteImageModal').style.display = 'none';
-}
-
-function showDeleteAllImagesModal() {
-    closeMenu();
-    document.getElementById('deleteAllImagesModal').style.display = 'flex';
-}
-
-function hideDeleteAllImagesModal() {
-    document.getElementById('deleteAllImagesModal').style.display = 'none';
-}
-
-function confirmDeleteImage() {
-    let displayImages = selectedFolderId === 'all' 
-        ? history 
-        : folders.find(f => f.id === selectedFolderId)?.images || [];
-    
-    if (currentImageIndex >= 0 && displayImages[currentImageIndex]) {
-        const deletedImage = displayImages.splice(currentImageIndex, 1)[0];
-        
-        // Remove from all folders
-        folders.forEach(folder => {
-            const index = folder.images.indexOf(deletedImage);
-            if (index > -1) folder.images.splice(index, 1);
+        // Event Listeners
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.kebab-menu') && !e.target.closest('.menu-options')) {
+                closeMenu();
+            }
         });
-        
-        currentImageIndex = -1;
-        updateUI();
-        saveData();
-    }
-    hideDeleteImageModal();
-}
 
-function confirmDeleteAllImages() {
-    history = [];
-    folders.forEach(folder => folder.images = []);
-    currentImageIndex = -1;
-    updateUI();
-    saveData();
-    hideDeleteAllImagesModal();
-}
-
-// Add click listener to close menu
-document.addEventListener('click', (e) => {
-    if (!e.target.closest('.kebab-menu') && !e.target.closest('.menu-options')) {
-        closeMenu();
-    }
-});
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') clearSelection();
+            if (e.ctrlKey && e.key === 'a' && isSelectionMode) {
+                e.preventDefault();
+                const currentImages = selectedFolderId === 'all' 
+                    ? history 
+                    : folders.find(f => f.id === selectedFolderId).images;
+                currentImages.forEach(url => selectedImages.add(url));
+                updateUI();
+            }
+        });
     </script>
 </body>
 </html>
